@@ -32,8 +32,9 @@ vu_colors = [
     RED,
     RED,
     ]
+# TODO: figure out why this seems to always have a "base" of 1 green led...
+#       cardinal vs ordinal im guessing
 def show_vu(pixels, level, offset=0):
-  level -= 1
   if level > len(vu_colors):
     return
   for idx, color in enumerate(vu_colors):
@@ -44,19 +45,18 @@ def show_vu(pixels, level, offset=0):
       pixels[idx + offset] = OFF
       pixels.show()
 
-def vol_up():
-  def colorwheel(pos):
-    # Input a value 0 to 255 to get a color value.
-    # The colours are a transition r - g - b - back to r.
-    if pos < 0 or pos > 255:
-      return (0, 0, 0)
-    if pos < 85:
-      return (255 - pos * 3, pos * 3, 0)
-    if pos < 170:
-      pos -= 85
-      return (0, 255 - pos * 3, pos * 3)
-    pos -= 170
-    return (pos * 3, 0, 255 - pos * 3)
+def colorwheel(pos):
+  # Input a value 0 to 255 to get a color value.
+  # The colours are a transition r - g - b - back to r.
+  if pos < 0 or pos > 255:
+    return (0, 0, 0)
+  if pos < 85:
+    return (255 - pos * 3, pos * 3, 0)
+  if pos < 170:
+    pos -= 85
+    return (0, 255 - pos * 3, pos * 3)
+  pos -= 170
+  return (pos * 3, 0, 255 - pos * 3)
 
 modes = [
     {
@@ -144,14 +144,14 @@ while True:
     # TODO: using abs isn't perfect, esp around -1, 0, 1
     modes_index = abs(position) % len(modes)
     print(modes[modes_index]['name'])
-    dotstar[0] = modes[modes_index]['color']
-    dotstar.show()
+    # dotstar[0] = modes[modes_index]['color']
+    # dotstar.show()
   last_position = position
 
   # just for fun
+  dotstar[0] = colorwheel(abs(position * 3))
+  dotstar.show()
   show_vu(pixels, abs(position), 2)
-  # dotstar[0] = colorwheel(abs(position))
-  # dotstar.show()
 
   # Check each pin
   for key_pin in key_pin_array:
