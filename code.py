@@ -22,46 +22,60 @@ CYAN = (0, 255, 255)
 BLUE = (0, 0, 255)
 PURPLE = (180, 0, 255)
 
-vu_meter = [
-		GREEN,
-		GREEN,
-		GREEN,
-		YELLOW,
-		YELLOW,
-		YELLOW,
-		RED,
-		RED,
-		]
+vu_colors = [
+    GREEN,
+    GREEN,
+    GREEN,
+    YELLOW,
+    YELLOW,
+    YELLOW,
+    RED,
+    RED,
+    ]
 def show_vu(pixels, level, offset=0):
-	level -= 1
-	if level > len(vu_meter):
-		return
-	for idx, color in enumerate(vu_meter):
-		if idx <= level:
-			pixels[idx + offset] = vu_meter[idx]
-			pixels.show()
-		else:
-			pixels[idx + offset] = OFF
-			pixels.show()
+  level -= 1
+  if level > len(vu_colors):
+    return
+  for idx, color in enumerate(vu_colors):
+    if idx <= level:
+      pixels[idx + offset] = vu_colors[idx]
+      pixels.show()
+    else:
+      pixels[idx + offset] = OFF
+      pixels.show()
+
+def vol_up():
+  def colorwheel(pos):
+    # Input a value 0 to 255 to get a color value.
+    # The colours are a transition r - g - b - back to r.
+    if pos < 0 or pos > 255:
+      return (0, 0, 0)
+    if pos < 85:
+      return (255 - pos * 3, pos * 3, 0)
+    if pos < 170:
+      pos -= 85
+      return (0, 255 - pos * 3, pos * 3)
+    pos -= 170
+    return (pos * 3, 0, 255 - pos * 3)
 
 modes = [
-		{
-			'name': 'zoom',
-			'color': BLUE,
-			},
-		{
-			'name': 'chrome',
-			'color': YELLOW,
-			},
-		{
-			'name': 'osx',
-			'color': PURPLE,
-			},
-		{
-			'name': 'lightroom',
-			'color': CYAN,
-			}
-		]
+    {
+      'name': 'zoom',
+      'color': BLUE,
+      },
+    {
+      'name': 'chrome',
+      'color': YELLOW,
+      },
+    {
+      'name': 'osx',
+      'color': PURPLE,
+      },
+    {
+      'name': 'lightroom',
+      'color': CYAN,
+      }
+    ]
 modes_index = 0
 
 # The pins we'll use, each will have an internal pullup
@@ -98,59 +112,62 @@ keyboard_layout = KeyboardLayoutUS(keyboard)
 
 # Make all pin objects inputs with pullups
 for pin in keypress_pins:
-		key_pin = digitalio.DigitalInOut(pin)
-		key_pin.direction = digitalio.Direction.INPUT
-		key_pin.pull = digitalio.Pull.UP
-		key_pin_array.append(key_pin)
+  key_pin = digitalio.DigitalInOut(pin)
+  key_pin.direction = digitalio.Direction.INPUT
+  key_pin.pull = digitalio.Pull.UP
+  key_pin_array.append(key_pin)
 
 print("waiting for input...")
 
 def toggle_mute():
-		print('toggle_mute')
-		if DEBUG:
-				return
-		global mic_hot
-		keyboard.press(Keycode.COMMAND, Keycode.SHIFT, Keycode.A)
-		keyboard.release_all()
-		mic_hot = not mic_hot
+  print('toggle_mute')
+  if DEBUG:
+    return
+  global mic_hot
+  keyboard.press(Keycode.COMMAND, Keycode.SHIFT, Keycode.A)
+  keyboard.release_all()
+  mic_hot = not mic_hot
 
 def leave_call():
-		print('leave_call')
-		if DEBUG:
-				return
-		keyboard.press(Keycode.COMMAND, Keycode.W)
-		keyboard.release_all()
-		keyboard.send(Keycode.ENTER)
+  print('leave_call')
+  if DEBUG:
+    return
+  keyboard.press(Keycode.COMMAND, Keycode.W)
+  keyboard.release_all()
+  keyboard.send(Keycode.ENTER)
 
 while True:
-		# check encoder
-		position = encoder.position
-		if last_position is None or position != last_position:
-				# print("rotary position: %s" % (position))
-				# TODO: using abs isn't perfect, esp around -1, 0, 1
-				modes_index = abs(position) % len(modes)
-				print(modes[modes_index]['name'])
-				dotstar[0] = modes[modes_index]['color']
-				dotstar.show()
-		last_position = position
+  # check encoder
+  position = encoder.position
+  if last_position is None or position != last_position:
+    # print("rotary position: %s" % (position))
+    # TODO: using abs isn't perfect, esp around -1, 0, 1
+    modes_index = abs(position) % len(modes)
+    print(modes[modes_index]['name'])
+    dotstar[0] = modes[modes_index]['color']
+    dotstar.show()
+  last_position = position
 
-		# just for fun
-		show_vu(pixels, abs(position), 2)
+  # just for fun
+  show_vu(pixels, abs(position), 2)
+  # dotstar[0] = colorwheel(abs(position))
+  # dotstar.show()
 
-		# Check each pin
-		for key_pin in key_pin_array:
-				if not key_pin.value:  # Is it grounded?
-						i = key_pin_array.index(key_pin)
-						print("Pin #%d is grounded." % i)
+  # Check each pin
+  for key_pin in key_pin_array:
+    if not key_pin.value:  # Is it grounded?
+      i = key_pin_array.index(key_pin)
+      print("Pin #%d is grounded." % i)
 
-						pixels[i] = WHITE
-						pixels.show()
-						while not key_pin.value:
-								pass  # Wait for it to be ungrounded!
-						pixels[i] = BLUE
-						pixels.show()
-						if i == 0:
-								leave_call()
-						else:
-								toggle_mute()
-		time.sleep(0.1)
+      pixels[i] = WHITE
+      pixels.show()
+      while not key_pin.value:
+        pass  # Wait for it to be ungrounded!
+      pixels[i] = BLUE
+      pixels.show()
+      if i == 0:
+        leave_call()
+      else:
+        toggle_mute()
+  # time.sleep(0.1) # try speeding this up...
+  time.sleep(0.05)
