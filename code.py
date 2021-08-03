@@ -7,9 +7,13 @@ import usb_hid
 import neopixel
 import rotaryio
 import adafruit_dotstar
-from adafruit_hid.keyboard import Keyboard
-from adafruit_hid.keyboard_layout_us import KeyboardLayoutUS
-from adafruit_hid.keycode import Keycode
+
+KEYBOARD_ENABLED = False
+
+if KEYBOARD_ENABLED:
+  from adafruit_hid.keyboard import Keyboard
+  from adafruit_hid.keyboard_layout_us import KeyboardLayoutUS
+  from adafruit_hid.keycode import Keycode
 
 DEBUG = True
 
@@ -106,9 +110,10 @@ led.value = 1
 # inital mic/mute state
 mic_hot = False
 
-time.sleep(1)  # Sleep for a bit to avoid a race condition on some systems
-keyboard = Keyboard(usb_hid.devices)
-keyboard_layout = KeyboardLayoutUS(keyboard)
+if KEYBOARD_ENABLED:
+  time.sleep(1)  # Sleep for a bit to avoid a race condition on some systems
+  keyboard = Keyboard(usb_hid.devices)
+  keyboard_layout = KeyboardLayoutUS(keyboard)
 
 # Make all pin objects inputs with pullups
 for pin in keypress_pins:
